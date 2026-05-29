@@ -1,0 +1,45 @@
+"""
+FastAPI application entry point.
+"""
+import logging
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+
+from app.config import get_settings
+from app.routers import auth, questionnaire, conversation, memory, mood
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s | %(levelname)s | %(name)s | %(message)s",
+)
+
+settings = get_settings()
+
+app = FastAPI(
+    title="Shrink AI",
+    description="A RAG-based personal AI therapist with self-learning episodic memory.",
+    version="0.1.0",
+    docs_url="/docs",
+    redoc_url="/redoc",
+)
+
+# ── CORS ──────────────────────────────────────────────────────────────────────
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=settings.cors_origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# ── Routers ───────────────────────────────────────────────────────────────────
+app.include_router(auth.router)
+app.include_router(questionnaire.router)
+app.include_router(conversation.router)
+app.include_router(memory.router)
+app.include_router(mood.router)
+
+
+@app.get("/health")
+async def health():
+    return {"status": "ok", "version": "0.1.0"}

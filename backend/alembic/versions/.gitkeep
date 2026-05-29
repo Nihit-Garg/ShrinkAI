@@ -1,0 +1,5 @@
+"""
+Placeholder for the first migration version.
+Run: alembic revision --autogenerate -m "initial schema"
+This will generate the actual migration file in the versions/ directory.
+"""
