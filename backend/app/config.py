@@ -32,7 +32,7 @@ class Settings(BaseSettings):
     # ── App ──────────────────────────────────────────────────────────────────
     secret_key: str = "change-this-in-production"
     env: str = "development"
-    cors_origins: list[str] = ["http://localhost:3000"]
+    cors_origins: list[str] = ["*"]
 
     model_config = SettingsConfigDict(
         env_file=str(_ENV_FILE),
