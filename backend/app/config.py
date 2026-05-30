@@ -32,7 +32,12 @@ class Settings(BaseSettings):
     # ── App ──────────────────────────────────────────────────────────────────
     secret_key: str = "change-this-in-production"
     env: str = "development"
-    cors_origins: list[str] = ["*"]
+    # Comma-separated list of allowed origins (e.g. "http://localhost:3000,https://my-vercel-app.vercel.app")
+    cors_origins: str = "http://localhost:3000,*"
+
+    @property
+    def cors_origins_list(self) -> list[str]:
+        return [origin.strip() for origin in self.cors_origins.split(",") if origin.strip()]
 
     model_config = SettingsConfigDict(
         env_file=str(_ENV_FILE),
