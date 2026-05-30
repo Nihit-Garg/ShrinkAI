@@ -50,22 +50,24 @@ def get_episodic_collection(user_id: str) -> Collection:
     )
 
 
-# ── Nomic Embedder (Ollama) ───────────────────────────────────────────────────
+# ── Gemini Embedder ───────────────────────────────────────────────────────────
 
-class NomicEmbedder:
+from google import genai
+
+class GeminiEmbedder:
     """
-    Wrapper for nomic-embed-text via Ollama REST API.
-    Produces 768-dimensional embeddings.
+    Wrapper for Gemini text-embedding-004 via google-genai SDK.
+    Produces 768-dimensional embeddings by default.
     """
+    def __init__(self):
+        self.client = genai.Client(api_key=settings.gemini_api_key)
 
     def _embed(self, text: str) -> list[float]:
-        response = httpx.post(
-            f"{OLLAMA_BASE_URL}/api/embeddings",
-            json={"model": EMBED_MODEL, "prompt": text},
-            timeout=30.0,
+        response = self.client.models.embed_content(
+            model='text-embedding-004',
+            contents=text,
         )
-        response.raise_for_status()
-        return response.json()["embedding"]
+        return response.embeddings[0].values
 
     def embed_document(self, text: str) -> list[float]:
         return self._embed(text)
@@ -74,11 +76,11 @@ class NomicEmbedder:
         return self._embed(text)
 
 
-_embedder: Optional[NomicEmbedder] = None
+_embedder: Optional[GeminiEmbedder] = None
 
 
-def get_embedder() -> NomicEmbedder:
+def get_embedder() -> GeminiEmbedder:
     global _embedder
     if _embedder is None:
-        _embedder = NomicEmbedder()
+        _embedder = GeminiEmbedder()
     return _embedder
