@@ -64,8 +64,9 @@ class GeminiEmbedder:
 
     def _embed(self, text: str) -> list[float]:
         response = self.client.models.embed_content(
-            model='text-embedding-004',
+            model='gemini-embedding-2',
             contents=text,
+            config={'output_dimensionality': 768}
         )
         return response.embeddings[0].values
 
