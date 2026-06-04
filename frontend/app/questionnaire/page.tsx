@@ -67,8 +67,14 @@ function QuestionnaireContent() {
             console.error("Failed to parse saved answers");
           }
         }
-      } catch (err) {
-        setError('Failed to load questionnaire. Please try refreshing.');
+      } catch (err: any) {
+        console.error('[Questionnaire] Failed to load questions:', err);
+        const msg = err?.message || '';
+        if (msg.includes('fetch') || msg.includes('network') || msg.includes('Failed to fetch')) {
+          setError('Cannot reach the server. Make sure the backend is running on port 8000, then refresh.');
+        } else {
+          setError(`Failed to load questionnaire: ${msg || 'Unknown error'}. Please try refreshing.`);
+        }
       } finally {
         setIsLoading(false);
       }

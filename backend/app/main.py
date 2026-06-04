@@ -2,8 +2,8 @@
 FastAPI application entry point.
 """
 import logging
-from fastapi import FastAPI, Request
-from fastapi.responses import Response
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import get_settings
 from app.routers import auth, questionnaire, conversation, memory, mood
@@ -24,37 +24,17 @@ app = FastAPI(
 )
 
 
-# ── CORS — custom middleware that survives Railway's proxy ─────────────────────
-# Starlette's CORSMiddleware is intercepted before it reaches FastAPI on Railway.
-# This middleware explicitly handles OPTIONS at the app level and injects headers
-# on every response, which is the only reliable approach on proxied PaaS platforms.
-@app.middleware("http")
-async def cors_middleware(request: Request, call_next):
-    origin = request.headers.get("origin", "")
-
-    # Handle preflight OPTIONS request immediately — never let it hit a route
-    if request.method == "OPTIONS":
-        return Response(
-            status_code=200,
-            headers={
-                "Access-Control-Allow-Origin": origin or "*",
-                "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, PATCH, OPTIONS",
-                "Access-Control-Allow-Headers": "Authorization, Content-Type, Accept, X-Requested-With",
-                "Access-Control-Allow-Credentials": "true",
-                "Access-Control-Max-Age": "600",
-            },
-        )
-
-    response = await call_next(request)
-
-    # Inject CORS headers on every response
-    if origin:
-        response.headers["Access-Control-Allow-Origin"] = origin
-        response.headers["Access-Control-Allow-Credentials"] = "true"
-        response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, PATCH, OPTIONS"
-        response.headers["Access-Control-Allow-Headers"] = "Authorization, Content-Type, Accept, X-Requested-With"
-
-    return response
+# ── CORS ──────────────────────────────────────────────────────────────────────
+# Allow all origins so both local dev (localhost:3000) and any deployed frontend
+# can reach the backend. Credentials are allowed for Bearer-token flows.
+# In production you can tighten allow_origins to your specific domain.
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=False,   # must be False when allow_origins=["*"]
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
 # ── Routers ───────────────────────────────────────────────────────────────────
