@@ -190,13 +190,22 @@ function ChatContent() {
             </div>
             <h1 className="text-xl font-medium text-[var(--color-charcoal)]">Shrink AI</h1>
           </div>
-          <button
-            onClick={logout}
-            className="p-2 text-[var(--color-slate)] hover:text-[var(--color-charcoal)] transition-colors rounded-full hover:bg-black/5"
-            title="Sign Out"
-          >
-            <LogOut size={20} />
-          </button>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => router.push('/mood')}
+              className="p-2 text-[var(--color-slate)] hover:text-[var(--color-sage)] transition-colors rounded-full hover:bg-black/5"
+              title="Mood trend"
+            >
+              <TrendingUp size={18} />
+            </button>
+            <button
+              onClick={logout}
+              className="p-2 text-[var(--color-slate)] hover:text-[var(--color-charcoal)] transition-colors rounded-full hover:bg-black/5"
+              title="Sign Out"
+            >
+              <LogOut size={20} />
+            </button>
+          </div>
         </header>
 
         <SessionPicker
