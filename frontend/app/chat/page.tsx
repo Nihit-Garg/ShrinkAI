@@ -8,7 +8,8 @@ import { MessageBubble } from '@/components/chat/MessageBubble';
 import { ChatInput } from '@/components/chat/ChatInput';
 import { TypingPulse } from '@/components/chat/TypingPulse';
 import { SessionPicker } from '@/components/chat/SessionPicker';
-import { LogOut } from 'lucide-react';
+import { CrisisBanner } from '@/components/chat/CrisisBanner';
+import { LogOut, TrendingUp } from 'lucide-react';
 import { ProtectedPage } from '@/components/ProtectedPage';
 
 interface Message {
@@ -54,6 +55,7 @@ function ChatContent() {
   const [inputValue, setInputValue] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [sessionId, setSessionId] = useState<string | null>(null);
+  const [showCrisis, setShowCrisis] = useState(false);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -150,6 +152,11 @@ function ChatContent() {
 
       if (!sessionId) setSessionId(response.session_id);
 
+      // Show crisis helpline banner if the backend flagged it
+      if (response.crisis_detected) {
+        setShowCrisis(true);
+      }
+
       setMessages((prev) => [
         ...prev,
         { id: response.message_id, role: 'assistant', content: response.content },
@@ -213,6 +220,14 @@ function ChatContent() {
           <h1 className="text-xl font-medium text-[var(--color-charcoal)]">Shrink AI</h1>
         </div>
         <div className="flex items-center gap-3">
+          {/* Mood trend link */}
+          <button
+            onClick={() => router.push('/mood')}
+            className="p-2 text-[var(--color-slate)] hover:text-[var(--color-sage)] transition-colors rounded-full hover:bg-black/5"
+            title="Mood trend"
+          >
+            <TrendingUp size={18} />
+          </button>
           {/* Go back to session picker if there were past sessions */}
           {pastSessions.length > 0 && (
             <button
@@ -237,6 +252,9 @@ function ChatContent() {
           {messages.map((msg) => (
             <MessageBubble key={msg.id} content={msg.content} role={msg.role} />
           ))}
+
+          {/* Crisis helpline banner — appears inline after the AI crisis response */}
+          {showCrisis && <CrisisBanner />}
 
           {isLoading && (
             <div className="flex justify-start mb-6 animate-fade-in-up">
