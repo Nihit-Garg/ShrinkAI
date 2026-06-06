@@ -115,6 +115,18 @@ class SupabaseDB:
         )
         return result.data
 
+    def get_last_session_message(self, session_id: str) -> dict | None:
+        """Return the single most-recent message for a session — used for preview cards."""
+        result = (
+            self.client.table("messages")
+            .select("role, content, created_at")
+            .eq("session_id", session_id)
+            .order("created_at", desc=True)
+            .limit(1)
+            .execute()
+        )
+        return result.data[0] if result.data else None
+
     # ── messages ──────────────────────────────────────────────────────────────
 
     def create_message(
