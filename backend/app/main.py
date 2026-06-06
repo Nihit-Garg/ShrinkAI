@@ -2,8 +2,8 @@
 FastAPI application entry point.
 """
 import logging
-from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
+from fastapi import FastAPI, Request
+from fastapi.responses import Response
 
 from app.config import get_settings
 from app.routers import auth, questionnaire, conversation, memory, mood
@@ -25,16 +25,32 @@ app = FastAPI(
 
 
 # ── CORS ──────────────────────────────────────────────────────────────────────
-# Allow all origins so both local dev (localhost:3000) and any deployed frontend
-# can reach the backend. Credentials are allowed for Bearer-token flows.
-# In production you can tighten allow_origins to your specific domain.
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=False,   # must be False when allow_origins=["*"]
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+# Custom middleware instead of Starlette's CORSMiddleware because:
+# 1. allow_origins=["*"] + allow_credentials=True is illegal in the CORS spec
+#    (browser blocks it), and allow_credentials=False breaks Bearer-token flows.
+# 2. Railway's reverse proxy drops OPTIONS before it reaches add_middleware().
+# This handler explicitly catches OPTIONS preflights and echoes the caller's
+# specific Origin so both credentials and wildcard origins work correctly.
+@app.middleware("http")
+async def cors_handler(request: Request, call_next):
+    origin = request.headers.get("origin", "")
+    cors_headers = {
+        "Access-Control-Allow-Origin": origin if origin else "*",
+        "Access-Control-Allow-Credentials": "true",
+        "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, PATCH, OPTIONS",
+        "Access-Control-Allow-Headers": "Authorization, Content-Type, Accept, X-Requested-With",
+        "Access-Control-Max-Age": "600",
+        "Vary": "Origin",
+    }
+
+    # Return immediately for preflight — never route OPTIONS to handlers
+    if request.method == "OPTIONS":
+        return Response(status_code=200, headers=cors_headers)
+
+    response = await call_next(request)
+    for key, value in cors_headers.items():
+        response.headers[key] = value
+    return response
 
 
 # ── Routers ───────────────────────────────────────────────────────────────────

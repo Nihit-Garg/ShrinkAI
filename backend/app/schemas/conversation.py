@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from typing import Literal
+from typing import Literal, Optional
 import uuid
 
 
@@ -25,3 +25,16 @@ class SessionResponse(BaseModel):
 class ConversationHistoryResponse(BaseModel):
     session_id: str
     messages: list[dict]
+
+
+class SessionSummary(BaseModel):
+    session_id: str
+    started_at: str
+    ended_at: Optional[str] = None
+    last_message_preview: Optional[str] = None
+    last_message_role: Optional[str] = None
+
+
+class SessionsListResponse(BaseModel):
+    sessions: list[SessionSummary]
+

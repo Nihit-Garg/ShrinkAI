@@ -4,6 +4,8 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { fetchApi } from './api';
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+
 interface User {
   id: string;
   email: string;
@@ -68,11 +70,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const checkQuestionnaireStatus = async () => {
+    // Use raw fetch (not fetchApi) so a 401 never fires the auto-logout
+    // side-effect which would race with the subsequent router navigation.
     try {
-      const res = await fetchApi('/questionnaire/status');
-      return res.completed;
-    } catch (error) {
-      console.error("Error checking questionnaire status:", error);
+      const storedToken = localStorage.getItem('token');
+      if (!storedToken) return false;
+
+      const response = await fetch(`${API_URL}/questionnaire/status`, {
+        headers: {
+          Authorization: `Bearer ${storedToken}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) return false;  // any error → assume not done
+
+      const data = await response.json();
+      return Boolean(data.completed);
+    } catch {
       return false;
     }
   };

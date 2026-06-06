@@ -11,7 +11,7 @@ from fastapi import APIRouter, Depends, HTTPException, status, BackgroundTasks
 
 from app.db_client import SupabaseDB, get_db
 from app.middleware.auth import get_current_user
-from app.schemas.conversation import MessageRequest, MessageResponse, ConversationHistoryResponse
+from app.schemas.conversation import MessageRequest, MessageResponse, ConversationHistoryResponse, SessionsListResponse
 from app.services.llm_service import get_llm_service
 from app.services.context_assembler import assemble_context
 from app.services.crisis_service import detect_crisis
@@ -194,3 +194,33 @@ async def get_history(
             for m in messages
         ],
     )
+
+
+@router.get("/sessions", response_model=SessionsListResponse)
+async def list_sessions(
+    current_user: dict = Depends(get_current_user),
+    db: SupabaseDB = Depends(get_db),
+):
+    """
+    Return the user's last 5 sessions with a preview of the most recent message.
+    Used by the frontend session-picker screen.
+    """
+    user_id = current_user["user_id"]
+    raw_sessions = db.get_user_sessions(user_id, limit=10)  # fetch 10, filter empties
+
+    summaries = []
+    for session in raw_sessions:
+        last_msg = db.get_last_session_message(session["session_id"])
+        if not last_msg:
+            continue  # skip sessions with no messages
+        summaries.append({
+            "session_id": session["session_id"],
+            "started_at": session["started_at"],
+            "ended_at": session.get("ended_at"),
+            "last_message_preview": last_msg["content"][:120],
+            "last_message_role": last_msg["role"],
+        })
+        if len(summaries) == 5:
+            break  # return at most 5 sessions with messages
+
+    return SessionsListResponse(sessions=summaries)
