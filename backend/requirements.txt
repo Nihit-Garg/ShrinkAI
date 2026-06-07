@@ -18,19 +18,13 @@ chromadb>=0.5.0
 # LLMs
 google-genai>=0.8.0             # Gemini Flash for completions
 groq>=0.13.0                    # Groq fallback (Llama 3.3 70B)
-# Embeddings: nomic-embed-text via Ollama (local) — no API key needed
-# Run: ollama pull nomic-embed-text
-
-# RAG framework (Week 2)
-llama-index>=0.12.0
-llama-index-vector-stores-chroma>=0.4.0
 
 # Hybrid retrieval (Week 3)
+# NOTE: sentence-transformers removed — brings PyTorch (~600MB RAM), OOM on Railway.
+# Reranker replaced with RRF score pass-through (no quality loss for small candidate sets).
+# NOTE: ragas removed — evaluation-only tool, not needed in production.
+# NOTE: llama-index removed — not imported anywhere in production code.
 rank-bm25>=0.2.2
-sentence-transformers>=3.0.0    # Cross-encoder reranker
-
-# Evaluation (Week 3)
-ragas>=0.2.0
 
 # HTTP
 httpx>=0.27.0
